@@ -1,8 +1,10 @@
-use crate::app::AppResult;
-use crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
+
+use crossterm::event::{self, Event as CrosstermEvent, KeyEvent, MouseEvent};
+
+use crate::app::AppResult;
 
 /// Terminal events.
 #[derive(Clone, Copy, Debug)]
@@ -54,7 +56,9 @@ impl EventHandler {
                     }
 
                     if last_tick.elapsed() >= tick_rate {
-                        sender.send(Event::Tick).expect("failed to send tick event");
+                        if let Err(err) = sender.send(Event::Tick) {
+                            eprintln!("failed to send tick event: {}", err);
+                        }
                         last_tick = Instant::now();
                     }
                 }
