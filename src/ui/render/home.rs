@@ -5,7 +5,7 @@ use crate::app::App;
 
 /// Renders the user interface widgets.
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>, rect: &Rect) {
-    let (x, y, w, h) = (rect.left(), rect.top(), rect.width, rect.height);
+    let (x, y, w, h) = (rect.x, rect.y, rect.width, rect.height);
     frame.render_widget(
         Table::new(vec![
             Row::new(vec![""]).height((h - 6) / 2),

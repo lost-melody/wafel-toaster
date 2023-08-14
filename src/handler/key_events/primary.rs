@@ -16,6 +16,7 @@ pub fn handle_key_events(key_event: KeyEvent, app: &mut App) -> AppResult<()> {
                         .starts_with(&chr.to_lowercase().to_string())
                     {
                         app.primary.next();
+                        app.primary.set_input(' ');
                         app.primary.reset_elapsed();
                     }
                 }

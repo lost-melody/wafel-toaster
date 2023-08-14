@@ -27,7 +27,11 @@ impl Primary {
     }
 
     pub fn get_input(&mut self) -> char {
-        self.input
+        if self.input != 0 as char && self.input != ' ' {
+            self.input
+        } else {
+            '_'
+        }
     }
 
     pub fn set_input(&mut self, input: char) {

@@ -1,6 +1,8 @@
 mod home;
 mod primary;
 
+use std::cmp::max;
+
 use ratatui::prelude::*;
 use ratatui::widgets::Paragraph;
 
@@ -12,13 +14,12 @@ use crate::def;
 pub fn render<B: Backend>(app: &mut App, frame: &mut Frame<'_, B>) {
     let rect = frame.size();
     if rect.width >= def::MIN_WIDTH && rect.height >= def::MIN_HEIGHT {
-        let rect = frame.size();
-        let rect = Rect::new(
-            rect.width / 4,
-            rect.height / 4,
-            rect.width / 2,
-            rect.height / 2,
+        let (w, h) = (
+            max(rect.width / 2, def::MIN_WIDTH),
+            max(rect.height / 2, def::MIN_HEIGHT),
         );
+        let (x, y) = ((rect.width - w) / 2, (rect.height - h) / 2);
+        let rect = Rect::new(x, y, w, h);
         match app.page {
             AppPage::Home => home::render(app, frame, &rect),
             AppPage::Primary => primary::render(app, frame, &rect),
