@@ -1,14 +1,41 @@
 use std::cell::RefCell;
 use std::collections::BinaryHeap;
+use std::collections::VecDeque;
 use std::rc::Rc;
 
 use super::appdata::AppData;
-use super::appdata::Comp;
+
+#[derive(Debug, Default)]
+pub struct Comp {
+    pub comp: String,
+    pub code: String,
+    pub freq: u64,
+}
+
+impl PartialEq for Comp {
+    fn eq(&self, other: &Self) -> bool {
+        self.freq.eq(&other.freq)
+    }
+}
+
+impl PartialOrd for Comp {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.freq.partial_cmp(&other.freq)
+    }
+}
+
+impl Eq for Comp {}
+
+impl Ord for Comp {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.freq.cmp(&other.freq)
+    }
+}
 
 #[derive(Debug, Default)]
 pub struct Primary {
     heap: BinaryHeap<Rc<RefCell<Comp>>>,
-    current: Option<Rc<RefCell<Comp>>>,
+    queued: VecDeque<Rc<RefCell<Comp>>>,
     input: char,
     elapsed: u64,
 }
@@ -40,32 +67,48 @@ impl Primary {
 
     pub fn build_heap(&mut self, data: &AppData) {
         for component in data.compset.values() {
-            self.heap.push(component.clone());
+            let component = component.borrow();
+            self.heap.push(Rc::new(RefCell::new(Comp {
+                comp: component.comp.clone(),
+                code: component.code.clone(),
+                freq: component.freq,
+            })));
         }
     }
 
     pub fn get_current(&mut self, data: &AppData) -> Option<Rc<RefCell<Comp>>> {
-        if let Some(ref current) = self.current {
-            Some(current.clone())
-        } else {
+        if self.queued.is_empty() {
+            // 空隊列, 從堆中取
             if self.heap.is_empty() {
+                // 空堆則建堆
                 self.build_heap(data);
-                self.current = self.heap.pop();
             }
-            self.current.clone()
+            // 從堆中取出若幹
+            for _ in 0..8 {
+                if let Some(comp) = self.heap.pop() {
+                    self.queued.push_back(comp);
+                } else {
+                    break;
+                }
+            }
         }
+        self.queued.front().and_then(|comp| Some(comp.clone()))
     }
 
     pub fn next(&mut self) {
-        if let Some(ref current) = self.current {
-            {
-                let freq = &mut current.borrow_mut().freq;
-                if *freq > 1 {
-                    *freq -= *freq >> 2;
-                }
+        self.queued.pop_front().and_then(|comp| {
+            if self.get_elapsed() < 3000 {
+                // 三秒内答出, 權重减半
+                let freq = &mut comp.borrow_mut().freq;
+                *freq = if *freq > 1 { *freq / 2 } else { *freq };
             }
-            self.heap.push(current.clone());
-            self.current = self.heap.pop();
-        }
+            // 當前元素回堆, 並取出一個新元素
+            self.heap.push(comp);
+            self.heap.pop().and_then(|comp| {
+                self.queued.push_back(comp);
+                None::<()>
+            });
+            None::<()>
+        });
     }
 }
