@@ -9,3 +9,6 @@ edition = "2021"
 crossterm = "0.26.1"
 ratatui = { version = "0.22.0", features = ["all-widgets"] }
 regex = "1.9.3"
+
+[build-dependencies]
+chrono = "0.4.26"
